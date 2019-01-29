@@ -37,6 +37,7 @@
 #define SENSORS_SCREEN_ORIENTATION_HANDLE (ID_SO)
 #define SENSORS_SIGNIFICANT_MOTION_HANDLE (ID_SM)
 #define SENSORS_GYROSCOPE_HANDLE          (ID_GY)
+#define SENSORS_PRESSURE_HANDLE           (ID_PS)
 
 /*****************************************************************************/
 
@@ -184,6 +185,24 @@ static struct sensor_t sSensorList[] = {
         .flags = SENSOR_FLAG_CONTINUOUS_MODE,
         .reserved = {}
     },
+    {
+        .name = "BMP180 Pressure sensor",
+        .vendor = "Bosch",
+        .version = 1,
+        .handle = SENSORS_PRESSURE_HANDLE,
+        .type = SENSOR_TYPE_PRESSURE,
+        .maxRange = 125000,
+        .resolution = 1,
+        .power = 0,
+        .minDelay = 0,
+        .fifoReservedEventCount = 0,
+        .fifoMaxEventCount = 0,
+        .stringType = SENSOR_STRING_TYPE_PRESSURE,
+        .requiredPermission = 0,
+        .maxDelay = 0,
+        .flags = SENSOR_FLAG_CONTINUOUS_MODE,
+        .reserved = {}
+	},
 };
 
 static int open_sensors(const struct hw_module_t* module, const char* id,
@@ -233,6 +252,7 @@ private:
         accel,
         compOri,
         gyro,
+        pressure,
         numSensorDrivers,
         numFds,
     };
@@ -264,6 +284,8 @@ private:
             return lightProx;
         case ID_GY:
             return gyro;
+        case ID_PS:
+            return pressure;
         default:
             return -EINVAL;
         }
@@ -294,6 +316,11 @@ sensors_poll_context_t::sensors_poll_context_t()
     mPollFds[gyro].fd = mSensors[gyro]->getFd();
     mPollFds[gyro].events = POLLIN;
     mPollFds[gyro].revents = 0;
+
+	mSensors[pressure] = new PressureSensor();
+	mPollFds[pressure].fd = mSensors[pressure]->getFd();
+	mPollFds[pressure].events = POLLIN;
+	mPollFds[pressure].revents = 0;
 
     int wakeFds[2];
     int result = pipe(wakeFds);
